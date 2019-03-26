@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: events-notifier
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: events-notifier
+  template:
+    metadata:
+      labels:
+        name: events-notifier
+    spec:
+      serviceAccountName: events-notifier
+      containers:
+        - name: events-notifier
+          # Replace this with the built image name
+          image: REPLACE_IMAGE
+          command:
+          - events-notifier
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "events-notifier"
