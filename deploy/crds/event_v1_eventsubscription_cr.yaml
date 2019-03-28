@@ -1,0 +1,7 @@
+apiVersion: event.redhat-cop.io/v1
+kind: EventSubscription
+metadata:
+  name: example-eventsubscription
+spec:
+  # Add fields here
+  size: 3

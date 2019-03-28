@@ -1,0 +1,12 @@
+apiVersion: event.redhat-cop.io/v1
+kind: EventSubscription
+metadata:
+  name: sub2
+spec:
+  matchObject:
+    apiVersion: apps.openshift.io/v1
+    kind: DeploymentConfig
+    name: dotnet-example
+    namespace: cert-operator
+status:
+  phase: subscribed

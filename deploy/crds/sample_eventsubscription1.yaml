@@ -1,0 +1,10 @@
+apiVersion: event.redhat-cop.io/v1
+kind: EventSubscription
+metadata:
+  name: sub1
+spec:
+  matchMessage: 'Created pod'
+  matchReason: SuccessfulCreate
+  matchType: Normal
+status:
+  phase: subscribed

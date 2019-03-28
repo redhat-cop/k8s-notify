@@ -1,0 +1,27 @@
+apiVersion: v1
+count: 1
+eventTime: null
+firstTimestamp: 2019-03-28T16:41:16Z
+involvedObject:
+  apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  name: dotnet-example
+  namespace: cert-operator
+  resourceVersion: "9831972"
+  uid: 12044597-50c3-11e9-a61e-fa163e3b26d5
+kind: Event
+lastTimestamp: 2019-03-28T16:41:16Z
+message: Created new replication controller "dotnet-example-4" for version 4
+metadata:
+  creationTimestamp: 2019-03-28T16:41:16Z
+  name: dotnet-example.15902cef174571fd
+  namespace: cert-operator
+  resourceVersion: "9831976"
+  selfLink: /api/v1/namespaces/cert-operator/events/dotnet-example.15902cef174571fd
+  uid: 4e9e51a6-5178-11e9-a61e-fa163e3b26d5
+reason: DeploymentCreated
+reportingComponent: ""
+reportingInstance: ""
+source:
+  component: deploymentconfig-controller
+type: Normal

@@ -8,6 +8,7 @@ import (
 	"runtime"
 
 	"github.com/redhat-cop/events-notifier/pkg/apis"
+	eventv1 "github.com/redhat-cop/events-notifier/pkg/apis/event/v1"
 	"github.com/redhat-cop/events-notifier/pkg/controller"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -72,6 +73,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	var subscriptions []eventv1.EventSubscription
+
 	ctx := context.TODO()
 
 	// Become the leader before proceeding
@@ -100,7 +103,7 @@ func main() {
 	}
 
 	// Setup all Controllers
-	if err := controller.AddToManager(mgr); err != nil {
+	if err := controller.AddToManager(mgr, &subscriptions); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

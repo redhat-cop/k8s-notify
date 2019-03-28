@@ -9,6 +9,8 @@ required = [
   "k8s.io/kube-openapi/cmd/openapi-gen",
   "k8s.io/gengo/args",
   "sigs.k8s.io/controller-tools/pkg/crd/generator",
+  "github.com/google/go-cmp/cmp",
+  "github.com/nsf/jsondiff",
 ]
 
 [[override]]
