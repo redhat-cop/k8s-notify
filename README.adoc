@@ -1,0 +1,26 @@
+= Kubernetes Event Notifier
+
+This project is a Kubernetes Operator that allows a cluster user to receive notifications about events in the k8s events log.
+
+== Running the Operator Locally
+
+[source,bash]
+----
+dep ensure
+operator-sdk up local
+----
+
+== Subscribing to a Type of Event
+
+You can subscribe to receive notifications by creating an `EventSubscription` in a namepsace the operator is watching. Here are a few samples.
+
+----
+oc apply -f deploy/crds/sample_eventsubscription1.yaml
+oc apply -f deploy/crds/sample_eventsubscription2.yaml
+----
+
+Now, to fire the notifications, deploy an app.
+
+----
+oc new-app --template=dotnet-example
+----
