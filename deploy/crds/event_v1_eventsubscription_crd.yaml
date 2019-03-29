@@ -10,6 +10,9 @@ spec:
     listKind: EventSubscriptionList
     plural: eventsubscriptions
     singular: eventsubscription
+    shortNames:
+      - eventsub
+      - es
   scope: Namespaced
   subresources:
     status: {}

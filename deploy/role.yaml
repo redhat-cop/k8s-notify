@@ -44,3 +44,10 @@ rules:
   - '*'
   verbs:
   - '*'
+- apiGroups:
+  - notify.redhat-cop.io
+  resources:
+  - '*'
+  - notifiers
+  verbs:
+  - '*'

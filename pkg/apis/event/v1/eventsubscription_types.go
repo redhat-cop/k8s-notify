@@ -8,6 +8,7 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // EventSubscriptionSpec defines the desired state of EventSubscription
 // +k8s:openapi-gen=true
 type EventSubscriptionSpec struct {
