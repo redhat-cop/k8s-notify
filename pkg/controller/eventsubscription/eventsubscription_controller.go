@@ -88,12 +88,6 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 	// Fetch the EventSubscription instance
 	instance := &eventv1.EventSubscription{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
-	out, err := json.Marshal(instance)
-	if err != nil {
-		reqLogger.Error(err, "Failed to unmarshall EventSubscription")
-	}
-
-	reqLogger.Info(fmt.Sprintf("Processing EventSubscription: %s", out))
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -107,22 +101,74 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 		return reconcile.Result{}, err
 	}
 
-	if instance.DeletionTimestamp != nil {
+	// Log the object for debugging purposes
+	out, err := json.Marshal(instance)
+	if err != nil {
+		reqLogger.Error(err, "Failed to unmarshall EventSubscription")
+	}
+	reqLogger.Info(fmt.Sprintf("Processing EventSubscription: %s", out))
 
-		// CR is being deleted; unregister subscription
-		*r.subscriptions = eventv1.RemoveEventSubscription(r.subscriptions, instance)
-		reqLogger.Info(fmt.Sprintf("Removing subscription: %s", instance.Name))
+	// name of your custom finalizer
+	myFinalizerName := "finalizers.event.redhat-cop.io"
 
-	} else {
+	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
 
-		// CR was create; register subscription
+		// CR was created
+
+		// Ensure finalizer is set
+		if !containsString(instance.ObjectMeta.Finalizers, myFinalizerName) {
+			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, myFinalizerName)
+			if err := r.client.Update(context.Background(), instance); err != nil {
+				return reconcile.Result{}, err
+			}
+			return reconcile.Result{}, nil
+		}
+
+		// Register subscription
 		if eventv1.AddEventSubscription(r.subscriptions, instance) {
 			reqLogger.Info(fmt.Sprintf("New subscription registered: %s", instance.Name))
 		} else {
 			reqLogger.Info(fmt.Sprintf("Already registered: %s", instance.Name))
 		}
 
+	} else {
+
+		// CR is being deleted;
+
+		if containsString(instance.ObjectMeta.Finalizers, myFinalizerName) {
+			// Unregister subscription
+			*r.subscriptions = eventv1.RemoveEventSubscription(r.subscriptions, instance)
+			reqLogger.Info(fmt.Sprintf("Removing subscription: %s", instance.Name))
+
+			// remove our finalizer from the list and update it.
+			instance.ObjectMeta.Finalizers = removeString(instance.ObjectMeta.Finalizers, myFinalizerName)
+			if err := r.client.Update(context.Background(), instance); err != nil {
+				return reconcile.Result{}, err
+			}
+		}
 	}
 
 	return reconcile.Result{}, nil
+}
+
+//
+// Helper functions to check and remove string from a slice of strings.
+//
+func containsString(slice []string, s string) bool {
+	for _, item := range slice {
+		if item == s {
+			return true
+		}
+	}
+	return false
+}
+
+func removeString(slice []string, s string) (result []string) {
+	for _, item := range slice {
+		if item == s {
+			continue
+		}
+		result = append(result, item)
+	}
+	return
 }

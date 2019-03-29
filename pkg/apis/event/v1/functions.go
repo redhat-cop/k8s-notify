@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"regexp"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/nsf/jsondiff"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -20,20 +19,11 @@ func AddEventSubscription(es *[]EventSubscription, e *EventSubscription) bool {
 func RemoveEventSubscription(es *[]EventSubscription, e *EventSubscription) []EventSubscription {
 	var newSubs []EventSubscription
 	for _, b := range *es {
-		if !cmp.Equal(b, e) {
+		if !b.Equal(e) {
 			newSubs = append(newSubs, *e)
 		}
 	}
 	return newSubs
-}
-
-func eventInSlice(es *[]EventSubscription, e *EventSubscription) bool {
-	for _, b := range *es {
-		if cmp.Equal(b, e) {
-			return true
-		}
-	}
-	return false
 }
 
 func (s *EventSubscription) Subscribed(e *corev1.Event) (bool, error) {
@@ -90,4 +80,30 @@ func (s *EventSubscription) Subscribed(e *corev1.Event) (bool, error) {
 
 	// Nothing else to check, subscription must match
 	return true, nil
+}
+
+func (s *EventSubscription) Equal(e *EventSubscription) bool {
+	if s.TypeMeta.String() != e.TypeMeta.String() {
+		return false
+	}
+	if s.ObjectMeta.GetName() != e.ObjectMeta.GetName() {
+		return false
+	}
+	if s.ObjectMeta.GetNamespace() != e.ObjectMeta.GetNamespace() {
+		return false
+	}
+	if s.Spec != e.Spec {
+		return false
+	}
+
+	return true
+}
+
+func eventInSlice(es *[]EventSubscription, e *EventSubscription) bool {
+	for _, b := range *es {
+		if b.Equal(e) {
+			return true
+		}
+	}
+	return false
 }
