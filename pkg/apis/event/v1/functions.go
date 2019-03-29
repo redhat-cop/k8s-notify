@@ -17,6 +17,16 @@ func AddEventSubscription(es *[]EventSubscription, e *EventSubscription) bool {
 	return false
 }
 
+func RemoveEventSubscription(es *[]EventSubscription, e *EventSubscription) []EventSubscription {
+	var newSubs []EventSubscription
+	for _, b := range *es {
+		if !cmp.Equal(b, e) {
+			newSubs = append(newSubs, *e)
+		}
+	}
+	return newSubs
+}
+
 func eventInSlice(es *[]EventSubscription, e *EventSubscription) bool {
 	for _, b := range *es {
 		if cmp.Equal(b, e) {

@@ -88,26 +88,40 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 	// Fetch the EventSubscription instance
 	instance := &eventv1.EventSubscription{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	out, err := json.Marshal(instance)
+	if err != nil {
+		reqLogger.Error(err, "Failed to unmarshall EventSubscription")
+	}
+
+	reqLogger.Info(fmt.Sprintf("Processing EventSubscription: %s", out))
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
+			reqLogger.Error(err, "Object does not exist")
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
+		reqLogger.Error(err, "Error reading object")
 		return reconcile.Result{}, err
 	}
 
-	out, err := json.Marshal(instance)
-	if err != nil {
-		reqLogger.Error(err, "Failed to unmarshall EventSubscription")
-	}
-	reqLogger.Info(fmt.Sprintf("Adding new subscription: %s", out))
-	if eventv1.AddEventSubscription(r.subscriptions, instance) {
-		reqLogger.Info(fmt.Sprintf("New subscription registered: %s", instance.Name))
+	if instance.DeletionTimestamp != nil {
+
+		// CR is being deleted; unregister subscription
+		*r.subscriptions = eventv1.RemoveEventSubscription(r.subscriptions, instance)
+		reqLogger.Info(fmt.Sprintf("Removing subscription: %s", instance.Name))
+
 	} else {
-		reqLogger.Info(fmt.Sprintf("Already registered: %s", instance.Name))
+
+		// CR was create; register subscription
+		if eventv1.AddEventSubscription(r.subscriptions, instance) {
+			reqLogger.Info(fmt.Sprintf("New subscription registered: %s", instance.Name))
+		} else {
+			reqLogger.Info(fmt.Sprintf("Already registered: %s", instance.Name))
+		}
+
 	}
 
 	return reconcile.Result{}, nil
