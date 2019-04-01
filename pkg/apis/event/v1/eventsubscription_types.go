@@ -8,7 +8,6 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // EventSubscriptionSpec defines the desired state of EventSubscription
 // +k8s:openapi-gen=true
 type EventSubscriptionSpec struct {
@@ -16,6 +15,7 @@ type EventSubscriptionSpec struct {
 	MatchMessage string                 `json:"matchMessage,omitempty"`
 	MatchReason  string                 `json:"matchReason,omitempty"`
 	MatchType    string                 `json:"matchType,omitempty"`
+	Notifier     string                 `json:"notifier"`
 }
 
 // EventSubscriptionStatus defines the observed state of EventSubscription
@@ -27,6 +27,7 @@ type EventSubscriptionStatus struct {
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // EventSubscription is the Schema for the eventsubscriptions API
 // +k8s:openapi-gen=true
 type EventSubscription struct {

@@ -6,9 +6,12 @@ import (
 	"fmt"
 
 	eventv1 "github.com/redhat-cop/events-notifier/pkg/apis/event/v1"
+	notifyv1 "github.com/redhat-cop/events-notifier/pkg/apis/notify/v1"
+	"github.com/redhat-cop/events-notifier/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -22,13 +25,13 @@ var log = logf.Log.WithName("controller_event")
 
 // Add creates a new Service Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, es *[]eventv1.EventSubscription) error {
-	return add(mgr, newReconciler(mgr, es))
+func Add(mgr manager.Manager, sr *util.SharedResources) error {
+	return add(mgr, newReconciler(mgr, sr))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, es *[]eventv1.EventSubscription) reconcile.Reconciler {
-	return &ReconcileEvent{client: mgr.GetClient(), scheme: mgr.GetScheme(), subscriptions: es}
+func newReconciler(mgr manager.Manager, sr *util.SharedResources) reconcile.Reconciler {
+	return &ReconcileEvent{client: mgr.GetClient(), scheme: mgr.GetScheme(), sr: sr}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -54,9 +57,9 @@ var _ reconcile.Reconciler = &ReconcileEvent{}
 type ReconcileEvent struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client        client.Client
-	scheme        *runtime.Scheme
-	subscriptions *[]eventv1.EventSubscription
+	client client.Client
+	scheme *runtime.Scheme
+	sr     *util.SharedResources
 }
 
 // Note:
@@ -79,8 +82,24 @@ func (r *ReconcileEvent) Reconcile(request reconcile.Request) (reconcile.Result,
 		return reconcile.Result{}, err
 	}
 
-	if r.subscribedTo(instance) {
+	subscr := r.subscribedTo(instance)
+	if !subscr.Equal(&eventv1.EventSubscription{}) {
 		reqLogger.Info(fmt.Sprintf("Notifying of subscribed event: %s", instance.Message))
+
+		// Get notifier associated with subscription
+		notifier := &notifyv1.Notifier{}
+		err = r.client.Get(context.TODO(), types.NamespacedName{Namespace: request.Namespace, Name: subscr.Spec.Notifier}, notifier)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				log.Error(err, fmt.Sprintf("Notifier `%s` does not exist", subscr.Spec.Notifier))
+				return reconcile.Result{}, nil
+			}
+			// Error reading the object - requeue the request.
+			return reconcile.Result{}, err
+		}
+
+		// Send notification
+		notifier.GetEventNotifier().Send(instance.Message)
 		return reconcile.Result{}, nil
 	}
 
@@ -88,24 +107,24 @@ func (r *ReconcileEvent) Reconcile(request reconcile.Request) (reconcile.Result,
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileEvent) subscribedTo(e *corev1.Event) bool {
+func (r *ReconcileEvent) subscribedTo(e *corev1.Event) eventv1.EventSubscription {
 	reqLogger := log.WithValues()
 	var subscribed bool
 	var err error
 	//var out []byte
-	for _, b := range *r.subscriptions {
+	for _, b := range *r.sr.Subscriptions {
 		_, err = json.Marshal(b)
 		if err != nil {
 			reqLogger.Error(err, "Failed to unmarshall EventSubscription")
 		}
-		//reqLogger.Info(fmt.Sprintf("Checking for match with %s", string(out)))
+		// Check for match
 		subscribed, err = b.Subscribed(e)
 		if err != nil {
 			reqLogger.Error(err, "Failed checking subscription")
 		}
 		if subscribed {
-			return true
+			return b
 		}
 	}
-	return false
+	return eventv1.EventSubscription{}
 }

@@ -6,5 +6,6 @@ spec:
   matchMessage: 'Created pod'
   matchReason: SuccessfulCreate
   matchType: Normal
+  notifier: hangouts-notify
 status:
   phase: subscribed

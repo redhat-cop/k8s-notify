@@ -8,8 +8,8 @@ import (
 	"runtime"
 
 	"github.com/redhat-cop/events-notifier/pkg/apis"
-	eventv1 "github.com/redhat-cop/events-notifier/pkg/apis/event/v1"
 	"github.com/redhat-cop/events-notifier/pkg/controller"
+	"github.com/redhat-cop/events-notifier/pkg/util"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
@@ -73,7 +73,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var subscriptions []eventv1.EventSubscription
+	var sr = util.NewSharedResources()
 
 	ctx := context.TODO()
 
@@ -103,7 +103,7 @@ func main() {
 	}
 
 	// Setup all Controllers
-	if err := controller.AddToManager(mgr, &subscriptions); err != nil {
+	if err := controller.AddToManager(mgr, &sr); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

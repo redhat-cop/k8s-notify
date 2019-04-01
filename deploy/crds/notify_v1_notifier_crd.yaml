@@ -1,14 +1,14 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: eventsubscriptions.event.redhat-cop.io
+  name: notifiers.notify.redhat-cop.io
 spec:
-  group: event.redhat-cop.io
+  group: notify.redhat-cop.io
   names:
-    kind: EventSubscription
-    listKind: EventSubscriptionList
-    plural: eventsubscriptions
-    singular: eventsubscription
+    kind: Notifier
+    listKind: NotifierList
+    plural: notifiers
+    singular: notifier
   scope: Namespaced
   subresources:
     status: {}
@@ -28,22 +28,8 @@ spec:
         metadata:
           type: object
         spec:
-          properties:
-            matchMessage:
-              type: string
-            matchObject:
-              type: object
-            matchReason:
-              type: string
-            matchType:
-              type: string
           type: object
         status:
-          properties:
-            spec:
-              type: string
-          required:
-          - spec
           type: object
   version: v1
   versions:

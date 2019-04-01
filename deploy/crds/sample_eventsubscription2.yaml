@@ -8,5 +8,6 @@ spec:
     kind: DeploymentConfig
     name: dotnet-example
     namespace: cert-operator
+  notifier: slack-notify
 status:
   phase: subscribed

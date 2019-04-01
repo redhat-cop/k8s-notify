@@ -1,0 +1,7 @@
+apiVersion: notify.redhat-cop.io/v1
+kind: Notifier
+metadata:
+  name: example-notifier
+spec:
+  # Add fields here
+  size: 3

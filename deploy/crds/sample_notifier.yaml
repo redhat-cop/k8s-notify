@@ -1,7 +1,10 @@
-apiVersion: event.redhat-cop.io/v1
+apiVersion: notify.redhat-cop.io/v1
 kind: Notifier
+metadata:
+  name: slack-notify
 spec:
-  type: Slack
-  webhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
-status:
-  phase: sent
+  slack:
+    webhook_url: https://hooks.slack.com/services/foo/bar
+    username: my_cluster
+    channel: '#my-channel'
+    icon_emoji: :robot_face:

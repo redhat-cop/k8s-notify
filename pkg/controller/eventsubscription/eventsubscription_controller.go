@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	eventv1 "github.com/redhat-cop/events-notifier/pkg/apis/event/v1"
+	"github.com/redhat-cop/events-notifier/pkg/util"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,13 +28,13 @@ var log = logf.Log.WithName("controller_eventsubscription")
 
 // Add creates a new EventSubscription Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, es *[]eventv1.EventSubscription) error {
-	return add(mgr, newReconciler(mgr, es))
+func Add(mgr manager.Manager, sr *util.SharedResources) error {
+	return add(mgr, newReconciler(mgr, sr))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, es *[]eventv1.EventSubscription) reconcile.Reconciler {
-	return &ReconcileEventSubscription{client: mgr.GetClient(), scheme: mgr.GetScheme(), subscriptions: es}
+func newReconciler(mgr manager.Manager, sr *util.SharedResources) reconcile.Reconciler {
+	return &ReconcileEventSubscription{client: mgr.GetClient(), scheme: mgr.GetScheme(), sr: sr}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -69,9 +70,9 @@ var _ reconcile.Reconciler = &ReconcileEventSubscription{}
 type ReconcileEventSubscription struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client        client.Client
-	scheme        *runtime.Scheme
-	subscriptions *[]eventv1.EventSubscription
+	client client.Client
+	scheme *runtime.Scheme
+	sr     *util.SharedResources
 }
 
 // Reconcile reads that state of the cluster for a EventSubscription object and makes changes based on the state read
@@ -116,7 +117,7 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 		// CR was created
 
 		// Ensure finalizer is set
-		if !containsString(instance.ObjectMeta.Finalizers, myFinalizerName) {
+		if !util.ContainsString(instance.ObjectMeta.Finalizers, myFinalizerName) {
 			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, myFinalizerName)
 			if err := r.client.Update(context.Background(), instance); err != nil {
 				return reconcile.Result{}, err
@@ -125,7 +126,7 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 		}
 
 		// Register subscription
-		if eventv1.AddEventSubscription(r.subscriptions, instance) {
+		if eventv1.AddEventSubscription(r.sr.Subscriptions, instance) {
 			reqLogger.Info(fmt.Sprintf("New subscription registered: %s", instance.Name))
 		} else {
 			reqLogger.Info(fmt.Sprintf("Already registered: %s", instance.Name))
@@ -135,13 +136,13 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 
 		// CR is being deleted;
 
-		if containsString(instance.ObjectMeta.Finalizers, myFinalizerName) {
+		if util.ContainsString(instance.ObjectMeta.Finalizers, myFinalizerName) {
 			// Unregister subscription
-			*r.subscriptions = eventv1.RemoveEventSubscription(r.subscriptions, instance)
+			*r.sr.Subscriptions = eventv1.RemoveEventSubscription(r.sr.Subscriptions, instance)
 			reqLogger.Info(fmt.Sprintf("Removing subscription: %s", instance.Name))
 
 			// remove our finalizer from the list and update it.
-			instance.ObjectMeta.Finalizers = removeString(instance.ObjectMeta.Finalizers, myFinalizerName)
+			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, myFinalizerName)
 			if err := r.client.Update(context.Background(), instance); err != nil {
 				return reconcile.Result{}, err
 			}
@@ -149,26 +150,4 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 	}
 
 	return reconcile.Result{}, nil
-}
-
-//
-// Helper functions to check and remove string from a slice of strings.
-//
-func containsString(slice []string, s string) bool {
-	for _, item := range slice {
-		if item == s {
-			return true
-		}
-	}
-	return false
-}
-
-func removeString(slice []string, s string) (result []string) {
-	for _, item := range slice {
-		if item == s {
-			continue
-		}
-		result = append(result, item)
-	}
-	return
 }
