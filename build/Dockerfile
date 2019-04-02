@@ -1,4 +1,4 @@
-FROM alpine:3.8
+FROM centos:7
 
 ENV OPERATOR=/usr/local/bin/events-notifier \
     USER_UID=1001 \

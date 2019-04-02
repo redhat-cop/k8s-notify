@@ -95,11 +95,15 @@ func (r *ReconcileEvent) Reconcile(request reconcile.Request) (reconcile.Result,
 				return reconcile.Result{}, nil
 			}
 			// Error reading the object - requeue the request.
+			log.Error(err, fmt.Sprintf("Error retreiving Notifier `%s`", subscr.Spec.Notifier))
 			return reconcile.Result{}, err
 		}
 
 		// Send notification
-		notifier.GetEventNotifier().Send(instance.Message)
+		err = notifier.GetEventNotifier().Send(instance.Message)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
 		return reconcile.Result{}, nil
 	}
 
