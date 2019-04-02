@@ -1,6 +1,11 @@
 # Temporary Build Files
 build/_output
 build/_test
+
+# Build dependencies
+vendor/
+Gopkg.lock
+
 # Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 ### Emacs ###
 # -*- mode: gitignore; -*-
@@ -75,5 +80,3 @@ tags
 .vscode/*
 .history
 # End of https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
-vendor/
-Gopkg.lock
