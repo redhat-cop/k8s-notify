@@ -1,6 +1,7 @@
 = k8s-notify
+include::/docs/variables.adoc[]
 
-_k8s notify_ is a link:https://github.com/operator-framework/operator-sdk[Kubernetes Operator] that sends notifications to your favorite chat system.
+{project_name} is a link:https://github.com/operator-framework/operator-sdk[Kubernetes Operator] that sends notifications to your favorite chat system.
 
 == Supported Notifiers
 
@@ -19,7 +20,7 @@ We're going to walk through a sample use case.
 
 [source,bash]
 ----
-kubectl create namespace k8s-notify
+kubectl create namespace {project_name}
 kubectl apply -f deploy/service_account.yaml
 kubectl apply -f deploy/role.yaml
 kubectl apply -f deploy/role_binding.yaml
@@ -30,7 +31,7 @@ kubectl apply -f deploy/operator.yaml
 
 === Subscribe to an Event
 
-_k8s-chatops_ allows you to describe a type of event and subscribe to receive notifications about it. To do this, _k8s_chatops_ provides a _Custom Resource Definition_ called an `EventSubscription`. A simple one looks like this:
+{project_name} allows you to describe a type of event and subscribe to receive notifications about it. To do this, _k8s_chatops_ provides a _Custom Resource Definition_ called an `EventSubscription`. A simple one looks like this:
 
 [source,yaml]
 ----
@@ -54,7 +55,7 @@ This will trigger a notification any time a new pod is created in our namespace.
 
 === Configuring Notifications
 
-You may have noticed that the `EventSubscription` we created contains a reference `notifier: slack-notify`. In order to actually receive a notification, _k8s-chatops_ integrates with your chat provider of choice via a _Custom Resource Definition_ called a `Notifier`. This `Notifier` can be referenced by name in an `EventSubscription`. Let's create the `slack-notify` `Notifier` to send messages via Slack.
+You may have noticed that the `EventSubscription` we created contains a reference `notifier: slack-notify`. In order to actually receive a notification, {project_name} integrates with your chat provider of choice via a _Custom Resource Definition_ called a `Notifier`. This `Notifier` can be referenced by name in an `EventSubscription`. Let's create the `slack-notify` `Notifier` to send messages via Slack.
 
 First, we'll need to create an link:https://api.slack.com/incoming-webhooks#create_a_webhook[Incoming Webhook]. Copy the URL generated to feed into our config.
 
