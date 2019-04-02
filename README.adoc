@@ -1,26 +1,92 @@
-= Kubernetes Event Notifier
+= k8s-notify
 
-This project is a Kubernetes Operator that allows a cluster user to receive notifications about events in the k8s events log.
+_k8s notify_ is a link:https://github.com/operator-framework/operator-sdk[Kubernetes Operator] that sends notifications to your favorite chat system.
 
-== Running the Operator Locally
+== Supported Notifiers
+
+A _notifier_ is an integration with a chat system. Here are the ones we support right now.
+
+* Slack
+* Google Hangouts Chat
+
+Don't see the provider you're looking for? link:https://github.com/etsauer/k8s-event-notifier/issues/new[Create a feature request] or contribute one yourself.
+
+== Quickstart
+
+We're going to walk through a sample use case.
+
+=== Deploy k8s notify
 
 [source,bash]
 ----
-dep ensure
-operator-sdk up local
+kubectl create namespace k8s-notify
+kubectl apply -f deploy/service_account.yaml
+kubectl apply -f deploy/role.yaml
+kubectl apply -f deploy/role_binding.yaml
+kubectl apply -f deploy/crds/event_v1_eventsubscription_crd.yaml
+kubectl apply -f deploy/crds/notify_v1_notifier_crd.yaml
+kubectl apply -f deploy/operator.yaml
 ----
 
-== Subscribing to a Type of Event
+=== Subscribe to an Event
 
-You can subscribe to receive notifications by creating an `EventSubscription` in a namepsace the operator is watching. Here are a few samples.
+_k8s-chatops_ allows you to describe a type of event and subscribe to receive notifications about it. To do this, _k8s_chatops_ provides a _Custom Resource Definition_ called an `EventSubscription`. A simple one looks like this:
 
+[source,yaml]
 ----
-oc apply -f deploy/crds/sample_eventsubscription1.yaml
-oc apply -f deploy/crds/sample_eventsubscription2.yaml
+apiVersion: event.redhat-cop.io/v1
+kind: EventSubscription
+metadata:
+  name: new-pod-subscription
+spec:
+  matchMessage: 'Created pod'
+  notifier: slack-notify
 ----
 
-Now, to fire the notifications, deploy an app.
+Write this to a file called `new-pod-subscription.yaml` and create it.
 
+[source,bash]
 ----
-oc new-app --template=dotnet-example
+kubectl apply -f new-pod-subscription.yaml
 ----
+
+This will trigger a notification any time a new pod is created in our namespace.
+
+=== Configuring Notifications
+
+You may have noticed that the `EventSubscription` we created contains a reference `notifier: slack-notify`. In order to actually receive a notification, _k8s-chatops_ integrates with your chat provider of choice via a _Custom Resource Definition_ called a `Notifier`. This `Notifier` can be referenced by name in an `EventSubscription`. Let's create the `slack-notify` `Notifier` to send messages via Slack.
+
+First, we'll need to create an link:https://api.slack.com/incoming-webhooks#create_a_webhook[Incoming Webhook]. Copy the URL generated to feed into our config.
+
+A `Notifier` config looks like this. Make sure to paste in your webhook url.
+
+[source,bash]
+----
+apiVersion: notify.redhat-cop.io/v1
+kind: Notifier
+metadata:
+  name: slack-notify
+spec:
+  slack:
+    webhook_url: https://hooks.slack.com/services/foo/bar/baz
+----
+
+Write that to a file called `notifier-slack.yaml` and create it.
+
+[source,bash]
+----
+kubectl apply -f notifier-slack.yaml
+----
+
+Great, we're all set up. Let's take this sucker for a spin!
+
+=== Trigger a Notification
+
+Since our `EventSubscription` above triggers when a pod gets created, let's create one.
+
+[source,bash]
+----
+kubectl run busybox --image=busybox
+----
+
+**DING!**

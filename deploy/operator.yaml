@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: events-notifier
+  name: k8s-chatops
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: events-notifier
+      name: k8s-chatops
   template:
     metadata:
       labels:
-        name: events-notifier
+        name: k8s-chatops
     spec:
-      serviceAccountName: events-notifier
+      serviceAccountName: k8s-chatops
       containers:
-        - name: events-notifier
+        - name: k8s-chatops
           # Replace this with the built image name
-          image: REPLACE_IMAGE
+          image: etsauer/k8s-chatops:v0.0.1
           command:
           - events-notifier
           imagePullPolicy: Always
@@ -30,4 +30,4 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
-              value: "events-notifier"
+              value: "k8s-chatops"

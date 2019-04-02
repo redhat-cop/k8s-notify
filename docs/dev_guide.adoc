@@ -1,0 +1,9 @@
+= Development & Contribution Guide
+
+== Running the Operator Locally
+
+[source,bash]
+----
+dep ensure
+operator-sdk up local
+----
