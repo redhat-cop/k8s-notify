@@ -1,8 +1,7 @@
 = k8s-notify
-include::docs/variables.adoc[]
-#:project_name: _k8s-notify_
+:project_name: k8s-notify
 
-{project_name} is a link:https://github.com/operator-framework/operator-sdk[Kubernetes Operator] that sends notifications to your favorite chat system.
+_{project_name}_ is a link:https://github.com/operator-framework/operator-sdk[Kubernetes Operator] that sends notifications to your favorite chat system.
 
 == Supported Notifiers
 
