@@ -90,3 +90,7 @@ kubectl run busybox --image=busybox
 ----
 
 **DING!**
+
+image::/docs/images/pod-created.png[]
+
+We got a message!
