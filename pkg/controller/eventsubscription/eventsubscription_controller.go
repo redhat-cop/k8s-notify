@@ -87,8 +87,8 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 	reqLogger.Info("Reconciling EventSubscription")
 
 	// Fetch the EventSubscription instance
-	instance := &eventv1.EventSubscription{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	instance := eventv1.EventSubscription{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, &instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -103,7 +103,7 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 	}
 
 	// Log the object for debugging purposes
-	out, err := json.Marshal(instance)
+	out, err := json.Marshal(&instance)
 	if err != nil {
 		reqLogger.Error(err, "Failed to unmarshall EventSubscription")
 	}
@@ -119,14 +119,14 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 		// Ensure finalizer is set
 		if !util.ContainsString(instance.ObjectMeta.Finalizers, myFinalizerName) {
 			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, myFinalizerName)
-			if err := r.client.Update(context.Background(), instance); err != nil {
+			if err := r.client.Update(context.Background(), &instance); err != nil {
 				return reconcile.Result{}, err
 			}
 			return reconcile.Result{}, nil
 		}
 
 		// Register subscription
-		if eventv1.AddEventSubscription(r.sr.Subscriptions, instance) {
+		if eventv1.AddEventSubscription(r.sr.Subscriptions, &instance) {
 			reqLogger.Info(fmt.Sprintf("New subscription registered: %s", instance.Name))
 		} else {
 			reqLogger.Info(fmt.Sprintf("Already registered: %s", instance.Name))
@@ -138,12 +138,12 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 
 		if util.ContainsString(instance.ObjectMeta.Finalizers, myFinalizerName) {
 			// Unregister subscription
-			*r.sr.Subscriptions = eventv1.RemoveEventSubscription(r.sr.Subscriptions, instance)
+			*r.sr.Subscriptions = eventv1.RemoveEventSubscription(r.sr.Subscriptions, &instance)
 			reqLogger.Info(fmt.Sprintf("Removing subscription: %s", instance.Name))
 
 			// remove our finalizer from the list and update it.
 			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, myFinalizerName)
-			if err := r.client.Update(context.Background(), instance); err != nil {
+			if err := r.client.Update(context.Background(), &instance); err != nil {
 				return reconcile.Result{}, err
 			}
 		}

@@ -69,8 +69,8 @@ func (r *ReconcileEvent) Reconcile(request reconcile.Request) (reconcile.Result,
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 
 	// Fetch the Route svc
-	instance := &corev1.Event{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	instance := corev1.Event{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, &instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -82,7 +82,7 @@ func (r *ReconcileEvent) Reconcile(request reconcile.Request) (reconcile.Result,
 		return reconcile.Result{}, err
 	}
 
-	subscr := r.subscribedTo(instance)
+	subscr := r.subscribedTo(&instance)
 	if !subscr.Equal(&eventv1.EventSubscription{}) {
 		reqLogger.Info(fmt.Sprintf("Notifying of subscribed event: %s", instance.Message))
 

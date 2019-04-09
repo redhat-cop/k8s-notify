@@ -20,7 +20,7 @@ We're going to walk through a sample use case.
 
 [source,bash]
 ----
-kubectl create namespace {project_name}
+kubectl create namespace k8s-notify
 kubectl apply -f deploy/service_account.yaml
 kubectl apply -f deploy/role.yaml
 kubectl apply -f deploy/role_binding.yaml

@@ -37,7 +37,7 @@ func (n *SlackNotifier) Send(message string) error {
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(json.RawMessage(jsonStr)))
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err

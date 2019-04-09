@@ -85,8 +85,8 @@ func (r *ReconcileNotifier) Reconcile(request reconcile.Request) (reconcile.Resu
 	reqLogger.Info("Reconciling Notifier")
 
 	// Fetch the Notifier instance
-	instance := &notifyv1.Notifier{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	instance := notifyv1.Notifier{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, &instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -99,7 +99,7 @@ func (r *ReconcileNotifier) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	// Log the object for debugging purposes
-	out, err := json.Marshal(instance)
+	out, err := json.Marshal(&instance)
 	if err != nil {
 		reqLogger.Error(err, "Failed to unmarshall Notifier")
 	}
@@ -115,14 +115,14 @@ func (r *ReconcileNotifier) Reconcile(request reconcile.Request) (reconcile.Resu
 		// Ensure finalizer is set
 		if !util.ContainsString(instance.ObjectMeta.Finalizers, myFinalizerName) {
 			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, myFinalizerName)
-			if err := r.client.Update(context.Background(), instance); err != nil {
+			if err := r.client.Update(context.Background(), &instance); err != nil {
 				return reconcile.Result{}, err
 			}
 			return reconcile.Result{}, nil
 		}
 
 		// Register subscription
-		if notifyv1.AddNotifier(r.sr.Notifiers, instance) {
+		if notifyv1.AddNotifier(r.sr.Notifiers, &instance) {
 			reqLogger.Info(fmt.Sprintf("New subscription registered: %s", instance.Name))
 		} else {
 			reqLogger.Info(fmt.Sprintf("Already registered: %s", instance.Name))
@@ -134,12 +134,12 @@ func (r *ReconcileNotifier) Reconcile(request reconcile.Request) (reconcile.Resu
 
 		if util.ContainsString(instance.ObjectMeta.Finalizers, myFinalizerName) {
 			// Unregister subscription
-			*r.sr.Notifiers = notifyv1.RemoveNotifier(r.sr.Notifiers, instance)
+			*r.sr.Notifiers = notifyv1.RemoveNotifier(r.sr.Notifiers, &instance)
 			reqLogger.Info(fmt.Sprintf("Removing subscription: %s", instance.Name))
 
 			// remove our finalizer from the list and update it.
 			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, myFinalizerName)
-			if err := r.client.Update(context.Background(), instance); err != nil {
+			if err := r.client.Update(context.Background(), &instance); err != nil {
 				return reconcile.Result{}, err
 			}
 		}
