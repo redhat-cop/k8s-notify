@@ -113,19 +113,18 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 	if !instance.ObjectMeta.DeletionTimestamp.IsZero() {
 		// CR is being deleted;
 
-		if util.ContainsString(instance.ObjectMeta.Finalizers, finalizer) {
-			// Unregister subscription
-			delete(r.sr.Subscriptions, id)
-			reqLogger.Info(fmt.Sprintf("Removed subscription: %s", instance.Name))
-
-			// remove our finalizer from the list and update it.
-			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, finalizer)
-			if err = r.client.Update(context.Background(), &instance); err != nil {
-				return reconcile.Result{}, err
-			}
+		// remove our finalizer from the list and update it.
+		instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, finalizer)
+		if err = r.client.Update(context.Background(), &instance); err != nil {
+			return reconcile.Result{}, err
 		}
 
-		return reconcile.Result{}, err
+		// Unregister subscription
+		delete(r.sr.Subscriptions, id)
+		reqLogger.Info(fmt.Sprintf("Removed subscription: %s", instance.Name))
+
+		return reconcile.Result{}, nil
+
 	}
 
 	// Ensure finalizer is set

@@ -112,17 +112,16 @@ func (r *ReconcileNotifier) Reconcile(request reconcile.Request) (reconcile.Resu
 	if !instance.ObjectMeta.DeletionTimestamp.IsZero() {
 		// CR is being deleted;
 
-		if util.ContainsString(instance.ObjectMeta.Finalizers, finalizer) {
-			// Unregister notifier
-			delete(r.sr.Subscriptions, id)
-			reqLogger.Info(fmt.Sprintf("Removed subscription: %s", instance.Name))
-
-			// remove our finalizer from the list and update it.
-			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, finalizer)
-			if err := r.client.Update(context.Background(), &instance); err != nil {
-				return reconcile.Result{}, err
-			}
+		// remove our finalizer from the list and update it.
+		instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, finalizer)
+		if err := r.client.Update(context.Background(), &instance); err != nil {
+			return reconcile.Result{}, err
 		}
+
+		// Unregister notifier
+		delete(r.sr.Subscriptions, id)
+		reqLogger.Info(fmt.Sprintf("Removed notifier: %s", instance.Name))
+
 		return reconcile.Result{}, nil
 	}
 
