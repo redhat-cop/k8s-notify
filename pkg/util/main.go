@@ -6,14 +6,16 @@ import (
 )
 
 type SharedResources struct {
-	Subscriptions *[]eventv1.EventSubscription
-	Notifiers     *[]notifyv1.Notifier
+	Subscriptions map[string]eventv1.EventSubscription
+	Notifiers     map[string]notifyv1.Notifier
 }
 
 func NewSharedResources() SharedResources {
+	es := make(map[string]eventv1.EventSubscription)
+	n := make(map[string]notifyv1.Notifier)
 	return SharedResources{
-		Subscriptions: &[]eventv1.EventSubscription{},
-		Notifiers:     &[]notifyv1.Notifier{},
+		Subscriptions: es,
+		Notifiers:     n,
 	}
 }
 

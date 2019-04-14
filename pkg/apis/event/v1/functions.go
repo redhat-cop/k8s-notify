@@ -8,24 +8,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func AddEventSubscription(es *[]EventSubscription, e *EventSubscription) bool {
-	if !eventInSlice(es, e) {
-		*es = append(*es, *e)
-		return true
-	}
-	return false
-}
-
-func RemoveEventSubscription(es *[]EventSubscription, e *EventSubscription) []EventSubscription {
-	var newSubs []EventSubscription
-	for _, b := range *es {
-		if !b.Equal(e) {
-			newSubs = append(newSubs, *e)
-		}
-	}
-	return newSubs
-}
-
 func (s *EventSubscription) Subscribed(e *corev1.Event) (bool, error) {
 	// Check if the event message is a match
 	if s.Spec.MatchMessage != "" {
@@ -97,13 +79,4 @@ func (s *EventSubscription) Equal(e *EventSubscription) bool {
 	}
 
 	return true
-}
-
-func eventInSlice(es *[]EventSubscription, e *EventSubscription) bool {
-	for _, b := range *es {
-		if b.Equal(e) {
-			return true
-		}
-	}
-	return false
 }

@@ -16,11 +16,11 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
@@ -29,7 +29,6 @@ var (
 	metricsHost       = "0.0.0.0"
 	metricsPort int32 = 8383
 )
-var log = logf.Log.WithName("cmd")
 
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
@@ -37,7 +36,23 @@ func printVersion() {
 	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
+func init() {
+	// Log as JSON instead of the default ASCII formatter.
+	log.SetFormatter(&log.JSONFormatter{})
+
+	// Set log level
+	l, err := log.ParseLevel(os.Getenv("LOG_LEVEL"))
+	if err != nil {
+		log.Error(fmt.Sprintf("%s: Setting Info Level", err.Error()))
+		l = log.InfoLevel
+	}
+	log.Info(fmt.Sprintf("LogLevel: %s", l))
+	log.SetLevel(l)
+
+}
+
 func main() {
+
 	// Add the zap logger flag set to the CLI. The flag set must
 	// be added before calling pflag.Parse().
 	pflag.CommandLine.AddFlagSet(zap.FlagSet())
@@ -47,16 +62,6 @@ func main() {
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 
 	pflag.Parse()
-
-	// Use a zap logr.Logger implementation. If none of the zap
-	// flags are configured (or if the zap flag set is not being
-	// used), this defaults to a production zap logger.
-	//
-	// The logger instantiated here can be changed to any logger
-	// implementing the logr.Logger interface. This logger will
-	// be propagated through the whole operator, generating
-	// uniform and structured logs.
-	logf.SetLogger(zap.Logger())
 
 	printVersion()
 
@@ -73,7 +78,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var sr = util.NewSharedResources()
+	sr := util.NewSharedResources()
 
 	ctx := context.TODO()
 
@@ -97,13 +102,13 @@ func main() {
 	log.Info("Registering Components.")
 
 	// Setup Scheme for all resources
-	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+	if err = apis.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
 
 	// Setup all Controllers
-	if err := controller.AddToManager(mgr, &sr); err != nil {
+	if err = controller.AddToManager(mgr, &sr); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
