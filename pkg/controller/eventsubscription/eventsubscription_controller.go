@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/redhat-cop/events-notifier/pkg/apis"
 	eventv1 "github.com/redhat-cop/events-notifier/pkg/apis/event/v1"
-	"github.com/redhat-cop/events-notifier/pkg/util"
+	"github.com/redhat-cop/events-notifier/pkg/strings"
 
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -28,12 +29,12 @@ const finalizer = "finalizers.event.redhat-cop.io"
 
 // Add creates a new EventSubscription Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, sr *util.SharedResources) error {
+func Add(mgr manager.Manager, sr *apis.SharedResources) error {
 	return add(mgr, newReconciler(mgr, sr))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, sr *util.SharedResources) reconcile.Reconciler {
+func newReconciler(mgr manager.Manager, sr *apis.SharedResources) reconcile.Reconciler {
 	return &ReconcileEventSubscription{client: mgr.GetClient(), scheme: mgr.GetScheme(), sr: sr}
 }
 
@@ -72,7 +73,7 @@ type ReconcileEventSubscription struct {
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
-	sr     *util.SharedResources
+	sr     *apis.SharedResources
 }
 
 // Reconcile reads that state of the cluster for a EventSubscription object and makes changes based on the state read
@@ -114,7 +115,7 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 		// CR is being deleted;
 
 		// remove our finalizer from the list and update it.
-		instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, finalizer)
+		instance.ObjectMeta.Finalizers = strings.RemoveString(instance.ObjectMeta.Finalizers, finalizer)
 		if err = r.client.Update(context.Background(), &instance); err != nil {
 			return reconcile.Result{}, err
 		}
@@ -128,7 +129,7 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 	}
 
 	// Ensure finalizer is set
-	if !util.ContainsString(instance.ObjectMeta.Finalizers, finalizer) {
+	if !strings.ContainsString(instance.ObjectMeta.Finalizers, finalizer) {
 		instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, finalizer)
 		if err := r.client.Update(context.Background(), &instance); err != nil {
 			return reconcile.Result{}, err

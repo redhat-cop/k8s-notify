@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/redhat-cop/events-notifier/pkg/apis"
 	eventv1 "github.com/redhat-cop/events-notifier/pkg/apis/event/v1"
 	notifyv1 "github.com/redhat-cop/events-notifier/pkg/apis/notify/v1"
-	"github.com/redhat-cop/events-notifier/pkg/util"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -23,12 +23,12 @@ import (
 
 // Add creates a new Service Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, sr *util.SharedResources) error {
+func Add(mgr manager.Manager, sr *apis.SharedResources) error {
 	return add(mgr, newReconciler(mgr, sr))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, sr *util.SharedResources) reconcile.Reconciler {
+func newReconciler(mgr manager.Manager, sr *apis.SharedResources) reconcile.Reconciler {
 	return &ReconcileEvent{client: mgr.GetClient(), scheme: mgr.GetScheme(), sr: sr}
 }
 
@@ -57,7 +57,7 @@ type ReconcileEvent struct {
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
-	sr     *util.SharedResources
+	sr     *apis.SharedResources
 }
 
 // Note:

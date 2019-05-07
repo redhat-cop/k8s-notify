@@ -9,7 +9,6 @@ import (
 
 	"github.com/redhat-cop/events-notifier/pkg/apis"
 	"github.com/redhat-cop/events-notifier/pkg/controller"
-	"github.com/redhat-cop/events-notifier/pkg/util"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
@@ -78,7 +77,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	sr := util.NewSharedResources()
+	sr := apis.NewSharedResources()
 
 	ctx := context.TODO()
 
