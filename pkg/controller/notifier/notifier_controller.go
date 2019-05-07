@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/redhat-cop/events-notifier/pkg/apis"
 	notifyv1 "github.com/redhat-cop/events-notifier/pkg/apis/notify/v1"
-	"github.com/redhat-cop/events-notifier/pkg/util"
+	"github.com/redhat-cop/events-notifier/pkg/strings"
+	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,11 +17,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logf.Log.WithName("controller_notifier")
+const finalizer = "finalizers.event.redhat-cop.io"
 
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
@@ -28,12 +29,12 @@ var log = logf.Log.WithName("controller_notifier")
 
 // Add creates a new Notifier Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, sr *util.SharedResources) error {
+func Add(mgr manager.Manager, sr *apis.SharedResources) error {
 	return add(mgr, newReconciler(mgr, sr))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, sr *util.SharedResources) reconcile.Reconciler {
+func newReconciler(mgr manager.Manager, sr *apis.SharedResources) reconcile.Reconciler {
 	return &ReconcileNotifier{client: mgr.GetClient(), scheme: mgr.GetScheme(), sr: sr}
 }
 
@@ -72,7 +73,7 @@ type ReconcileNotifier struct {
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
-	sr     *util.SharedResources
+	sr     *apis.SharedResources
 }
 
 // Reconcile reads that state of the cluster for a Notifier object and makes changes based on the state read
@@ -81,7 +82,7 @@ type ReconcileNotifier struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileNotifier) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+	reqLogger := log.WithFields(log.Fields{"Request.Namespace": request.Namespace, "Request.Name": request.Name})
 	reqLogger.Info("Reconciling Notifier")
 
 	// Fetch the Notifier instance
@@ -98,52 +99,43 @@ func (r *ReconcileNotifier) Reconcile(request reconcile.Request) (reconcile.Resu
 		return reconcile.Result{}, err
 	}
 
+	// create a unique identifier for the subscription using `namespace/name`
+	id := fmt.Sprintf("%s/%s", instance.Namespace, instance.Name)
+
 	// Log the object for debugging purposes
 	out, err := json.Marshal(&instance)
 	if err != nil {
 		reqLogger.Error(err, "Failed to unmarshall Notifier")
+		return reconcile.Result{}, err
 	}
-	reqLogger.Info(fmt.Sprintf("Processing Notifier: %s", out))
+	reqLogger.Debug(fmt.Sprintf("Processing Notifier: %s", out))
 
-	// name of your custom finalizer
-	myFinalizerName := "finalizers.event.redhat-cop.io"
-
-	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
-
-		// CR was created
-
-		// Ensure finalizer is set
-		if !util.ContainsString(instance.ObjectMeta.Finalizers, myFinalizerName) {
-			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, myFinalizerName)
-			if err := r.client.Update(context.Background(), &instance); err != nil {
-				return reconcile.Result{}, err
-			}
-			return reconcile.Result{}, nil
-		}
-
-		// Register subscription
-		if notifyv1.AddNotifier(r.sr.Notifiers, &instance) {
-			reqLogger.Info(fmt.Sprintf("New subscription registered: %s", instance.Name))
-		} else {
-			reqLogger.Info(fmt.Sprintf("Already registered: %s", instance.Name))
-		}
-
-	} else {
-
+	if !instance.ObjectMeta.DeletionTimestamp.IsZero() {
 		// CR is being deleted;
 
-		if util.ContainsString(instance.ObjectMeta.Finalizers, myFinalizerName) {
-			// Unregister subscription
-			*r.sr.Notifiers = notifyv1.RemoveNotifier(r.sr.Notifiers, &instance)
-			reqLogger.Info(fmt.Sprintf("Removing subscription: %s", instance.Name))
+		// remove our finalizer from the list and update it.
+		instance.ObjectMeta.Finalizers = strings.RemoveString(instance.ObjectMeta.Finalizers, finalizer)
+		if err := r.client.Update(context.Background(), &instance); err != nil {
+			return reconcile.Result{}, err
+		}
 
-			// remove our finalizer from the list and update it.
-			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, myFinalizerName)
-			if err := r.client.Update(context.Background(), &instance); err != nil {
-				return reconcile.Result{}, err
-			}
+		// Unregister notifier
+		delete(r.sr.Subscriptions, id)
+		reqLogger.Info(fmt.Sprintf("Removed notifier: %s", instance.Name))
+
+		return reconcile.Result{}, nil
+	}
+
+	// Ensure finalizer is set
+	if !strings.ContainsString(instance.ObjectMeta.Finalizers, finalizer) {
+		instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, finalizer)
+		if err := r.client.Update(context.Background(), &instance); err != nil {
+			return reconcile.Result{}, err
 		}
 	}
+
+	// Register subscription
+	r.sr.Notifiers[id] = instance
 
 	return reconcile.Result{}, nil
 }

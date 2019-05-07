@@ -61,7 +61,7 @@ First, we'll need to create an link:https://api.slack.com/incoming-webhooks#crea
 
 A `Notifier` config looks like this. Make sure to paste in your webhook url.
 
-[source,bash]
+[source,yaml]
 ----
 apiVersion: notify.redhat-cop.io/v1
 kind: Notifier
@@ -95,3 +95,9 @@ kubectl run busybox --image=busybox
 image::/docs/images/pod-created.png[]
 
 We got a message!
+
+== Contributing
+
+We welcome contributions from the community. Feel free to link:https://github.com/etsauer/k8s-event-notifier/issues/new[open issues] and link:https://github.com/etsauer/k8s-event-notifier/pulls/new[pull requests].
+
+If you're planning to contribute, check out our link:/docs/dev_guide.adoc[developer guide].
