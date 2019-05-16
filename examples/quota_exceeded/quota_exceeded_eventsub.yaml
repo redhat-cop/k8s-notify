@@ -1,0 +1,10 @@
+apiVersion: event.redhat-cop.io/v1
+kind: EventSubscription
+metadata:
+  name: sub1
+spec:
+  matchMessage: '(combined from similar events)'
+  matchType: Warning
+  notifier: hangouts-notify
+status:
+  phase: subscribed

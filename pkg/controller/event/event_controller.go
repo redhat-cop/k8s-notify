@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/redhat-cop/events-notifier/pkg/apis"
 	eventv1 "github.com/redhat-cop/events-notifier/pkg/apis/event/v1"
 	notifyv1 "github.com/redhat-cop/events-notifier/pkg/apis/notify/v1"
 	log "github.com/sirupsen/logrus"
@@ -23,13 +22,13 @@ import (
 
 // Add creates a new Service Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, sr *apis.SharedResources) error {
-	return add(mgr, newReconciler(mgr, sr))
+func Add(mgr manager.Manager) error {
+	return add(mgr, newReconciler(mgr))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, sr *apis.SharedResources) reconcile.Reconciler {
-	return &ReconcileEvent{client: mgr.GetClient(), scheme: mgr.GetScheme(), sr: sr}
+func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	return &ReconcileEvent{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -57,16 +56,15 @@ type ReconcileEvent struct {
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
-	sr     *apis.SharedResources
 }
 
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileEvent) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	reqLogger := log.WithFields(log.Fields{"Request.Namespace": request.Namespace, "Request.Name": request.Name})
+	reqLogger := log.WithFields(log.Fields{"Controller": "event_controller", "Request.Namespace": request.Namespace, "Request.Name": request.Name})
 
-	// Fetch the Route svc
+	// Fetch the object
 	instance := corev1.Event{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, &instance)
 	if err != nil {
@@ -112,7 +110,7 @@ func (r *ReconcileEvent) Reconcile(request reconcile.Request) (reconcile.Result,
 	}
 
 	// Send notification
-	err = notifier.GetEventNotifier().Send(instance.Message)
+	err = notifier.GetMessageSender().Send(instance.Message)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -123,8 +121,19 @@ func (r *ReconcileEvent) Reconcile(request reconcile.Request) (reconcile.Result,
 func (r *ReconcileEvent) subscribedTo(e *corev1.Event) eventv1.EventSubscription {
 	var subscribed bool
 	var err error
-	//var out []byte
-	for _, b := range r.sr.Subscriptions {
+	subs := eventv1.EventSubscriptionList{}
+
+	err = r.client.List(context.TODO(),
+		&client.ListOptions{
+			Namespace: e.GetNamespace(),
+		},
+		&subs,
+	)
+	if err != nil {
+		log.Error(err, "Failed to get list of event subscriptions")
+		return eventv1.EventSubscription{}
+	}
+	for _, b := range subs.Items {
 		_, err = json.Marshal(b)
 		if err != nil {
 			log.Error(err, "Failed to unmarshall EventSubscription")

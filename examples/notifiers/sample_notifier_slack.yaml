@@ -1,0 +1,15 @@
+####
+# Sends messages to slack.
+# Generate an incoming webhook and paste its value in `spec.slack.webhook_url`.
+# https://api.slack.com/incoming-webhooks
+# If you'd like to customize the username that shows up in the slack message,
+# you can set it using `spec.slack.username`.
+####
+apiVersion: notify.redhat-cop.io/v1
+kind: Notifier
+metadata:
+  name: slack-notify
+spec:
+  slack:
+    webhook_url: https://hooks.slack.com/services/foo/bar/baz
+    username: my-kube-cluster

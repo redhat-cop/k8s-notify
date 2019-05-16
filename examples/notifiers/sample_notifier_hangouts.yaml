@@ -1,0 +1,12 @@
+####
+# Sends messages to Google Hangouts Chat
+# Generate an incoming webhook, and set the url to `spec.slack.webhook_url`
+# https://developers.google.com/hangouts/chat/how-tos/webhooks
+####
+apiVersion: notify.redhat-cop.io/v1
+kind: Notifier
+metadata:
+  name: hangouts-notify
+spec:
+  hangouts_chat:
+    webhook_url: https://chat.googleapis.com/v1/spaces/foo/messages?key=bar
