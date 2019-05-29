@@ -12,6 +12,10 @@ A _notifier_ is an integration with a chat system. Here are the ones we support 
 
 Don't see the provider you're looking for? link:https://github.com/etsauer/k8s-notify/issues/new[Create a feature request] or contribute one yourself.
 
+== Examples
+
+Check out the link:examples/[examples/] directory to see some sample use cases.
+
 == Quickstart
 
 We're going to walk through a sample use case.

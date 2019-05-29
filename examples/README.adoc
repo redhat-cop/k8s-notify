@@ -1,0 +1,5 @@
+= k8s-notify Examples
+
+- link:notifiers/[Sample `Notifier` resources]
+- link:eventsubscriptions/[Samples `EventSubscription` resources]
+- link:quota_exceeded/[Quota Exceeded Alert] - An end to end demo showing how to use k8s-notify to alert when a namespace quota is reached.

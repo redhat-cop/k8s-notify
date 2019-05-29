@@ -1,0 +1,8 @@
+apiVersion: notify.redhat-cop.io/v1
+kind: Notifier
+metadata:
+  name: slack-notify
+spec:
+  slack:
+    webhook_url: https://hooks.slack.com/services/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
+    username: d2.casl.rht-labs.com
