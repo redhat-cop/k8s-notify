@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/redhat-cop/events-notifier/pkg/apis"
 	eventv1 "github.com/redhat-cop/events-notifier/pkg/apis/event/v1"
 	"github.com/redhat-cop/events-notifier/pkg/strings"
 
@@ -23,19 +22,19 @@ import (
 const finalizer = "finalizers.event.redhat-cop.io"
 
 /**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
- */
+The EventSubscription controller serves no purpose currently, other than to
+notify/debug. All logic is built into the Event controller
+*/
 
 // Add creates a new EventSubscription Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, sr *apis.SharedResources) error {
-	return add(mgr, newReconciler(mgr, sr))
+func Add(mgr manager.Manager) error {
+	return add(mgr, newReconciler(mgr))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, sr *apis.SharedResources) reconcile.Reconciler {
-	return &ReconcileEventSubscription{client: mgr.GetClient(), scheme: mgr.GetScheme(), sr: sr}
+func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	return &ReconcileEventSubscription{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -73,7 +72,6 @@ type ReconcileEventSubscription struct {
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
-	sr     *apis.SharedResources
 }
 
 // Reconcile reads that state of the cluster for a EventSubscription object and makes changes based on the state read
@@ -82,8 +80,7 @@ type ReconcileEventSubscription struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	reqLogger := log.WithFields(log.Fields{"Request.Namespace": request.Namespace, "Request.Name": request.Name})
-	reqLogger.Info("Reconciling EventSubscription")
+	reqLogger := log.WithFields(log.Fields{"Controller": "eventsubscription_controller", "Request.Namespace": request.Namespace, "Request.Name": request.Name})
 
 	// Fetch the EventSubscription instance
 	instance := eventv1.EventSubscription{}
@@ -121,8 +118,7 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 		}
 
 		// Unregister subscription
-		delete(r.sr.Subscriptions, id)
-		reqLogger.Info(fmt.Sprintf("Removed subscription: %s", instance.Name))
+		reqLogger.Info(fmt.Sprintf("EventSubscription deleted: %s", id))
 
 		return reconcile.Result{}, nil
 
@@ -137,7 +133,7 @@ func (r *ReconcileEventSubscription) Reconcile(request reconcile.Request) (recon
 	}
 
 	// Register subscription
-	r.sr.Subscriptions[id] = instance
+	reqLogger.Info(fmt.Sprintf("EventSubscription created: %s", id))
 
 	return reconcile.Result{}, nil
 }

@@ -50,6 +50,6 @@ func init() {
 	SchemeBuilder.Register(&Notifier{}, &NotifierList{})
 }
 
-type EventNotifier interface {
+type MessageSender interface {
 	Send(message string) error
 }

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -33,7 +32,6 @@ func (n *SlackNotifier) Send(message string) error {
 	}
 
 	var jsonStr = []byte(fmt.Sprintf(`{"text":"%s"%s%s%s}`, escapeString(message), channel, username, icon_emoji))
-	fmt.Println("message: ", string(jsonStr))
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(json.RawMessage(jsonStr)))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -44,9 +42,5 @@ func (n *SlackNotifier) Send(message string) error {
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("response Status:", resp.Status)
-	fmt.Println("response Headers:", resp.Header)
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
 	return nil
 }

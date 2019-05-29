@@ -77,8 +77,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	sr := apis.NewSharedResources()
-
 	ctx := context.TODO()
 
 	// Become the leader before proceeding
@@ -107,7 +105,7 @@ func main() {
 	}
 
 	// Setup all Controllers
-	if err = controller.AddToManager(mgr, &sr); err != nil {
+	if err = controller.AddToManager(mgr); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/redhat-cop/events-notifier/pkg/apis"
 	notifyv1 "github.com/redhat-cop/events-notifier/pkg/apis/notify/v1"
 	"github.com/redhat-cop/events-notifier/pkg/strings"
 	log "github.com/sirupsen/logrus"
@@ -23,19 +22,19 @@ import (
 const finalizer = "finalizers.event.redhat-cop.io"
 
 /**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
- */
+The Notifier controller serves no purpose currently, other than to
+notify/debug. All logic is built into the Event controller
+*/
 
 // Add creates a new Notifier Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, sr *apis.SharedResources) error {
-	return add(mgr, newReconciler(mgr, sr))
+func Add(mgr manager.Manager) error {
+	return add(mgr, newReconciler(mgr))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, sr *apis.SharedResources) reconcile.Reconciler {
-	return &ReconcileNotifier{client: mgr.GetClient(), scheme: mgr.GetScheme(), sr: sr}
+func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	return &ReconcileNotifier{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -73,7 +72,6 @@ type ReconcileNotifier struct {
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
-	sr     *apis.SharedResources
 }
 
 // Reconcile reads that state of the cluster for a Notifier object and makes changes based on the state read
@@ -82,7 +80,7 @@ type ReconcileNotifier struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileNotifier) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	reqLogger := log.WithFields(log.Fields{"Request.Namespace": request.Namespace, "Request.Name": request.Name})
+	reqLogger := log.WithFields(log.Fields{"Controller": "notifier_controller", "Request.Namespace": request.Namespace, "Request.Name": request.Name})
 	reqLogger.Info("Reconciling Notifier")
 
 	// Fetch the Notifier instance
@@ -120,8 +118,7 @@ func (r *ReconcileNotifier) Reconcile(request reconcile.Request) (reconcile.Resu
 		}
 
 		// Unregister notifier
-		delete(r.sr.Subscriptions, id)
-		reqLogger.Info(fmt.Sprintf("Removed notifier: %s", instance.Name))
+		reqLogger.Info(fmt.Sprintf("Notifier Deleted: %s", id))
 
 		return reconcile.Result{}, nil
 	}
@@ -135,7 +132,6 @@ func (r *ReconcileNotifier) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	// Register subscription
-	r.sr.Notifiers[id] = instance
-
+	reqLogger.Info(fmt.Sprintf("Notifier registered: %s", id))
 	return reconcile.Result{}, nil
 }

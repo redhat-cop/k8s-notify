@@ -46,9 +46,12 @@ func notifierInSlice(es *[]Notifier, e *Notifier) bool {
 	return false
 }
 
-func (n *Notifier) GetEventNotifier() EventNotifier {
-	if n.Spec.Slack != nil {
+func (n *Notifier) GetMessageSender() MessageSender {
+	switch {
+	case n.Spec.Slack != nil:
 		return n.Spec.Slack
+	case n.Spec.HangoutsChat != nil:
+		return n.Spec.HangoutsChat
 	}
 	return nil
 }
