@@ -1,0 +1,7 @@
+apiVersion: notify.redhat-cop.io/v1
+kind: Notifier
+metadata:
+  name: hangouts-notify
+spec:
+  hangouts_chat:
+    webhook_url: https://chat.googleapis.com/v1/spaces/AAAA1RjtZDo/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=UiW1RVrEKw-bupq8Gn_gQrBIqUJrRoo-RGV_0eQ3V5o%3D

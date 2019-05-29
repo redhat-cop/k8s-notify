@@ -13,3 +13,5 @@ spec:
   slack:
     webhook_url: https://hooks.slack.com/services/foo/bar/baz
     username: my-kube-cluster
+    channel: '#my-channel'
+    icon_emoji: :robot_face:
