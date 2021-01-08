@@ -10,7 +10,7 @@ spec:
   template:
     metadata:
       labels:
-        name: k8s-notfiy
+        name: k8s-notify
     spec:
       serviceAccountName: k8s-notify
       containers:
